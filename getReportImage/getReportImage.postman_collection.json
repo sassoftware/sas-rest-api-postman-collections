@@ -1,0 +1,651 @@
+{
+	"info": {
+		"_postman_id": "2f4a2687-6328-43fa-9df8-2e941de7e479",
+		"name": "getReportImage",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "createCASSession",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "fd31f414-4d4d-4967-b2f6-86c9a6fcf028",
+						"exec": [
+							"pm.sendRequest({\r",
+							"    url: pm.environment.get(\"token_url\")+\"/SASLogon/oauth/token\",\r",
+							"    method: 'POST',\r",
+							"    header: {\r",
+							"        'Authorization': 'Basic '+ pm.environment.get(\"encoded_id_secret\"),\r",
+							"        'Accept': 'application/json',\r",
+							"        'Content-Type': 'application/x-www-form-urlencoded',\r",
+							"    },\r",
+							"    body: {\r",
+							"          mode: 'urlencoded',\r",
+							"          urlencoded: [\r",
+							"            {key: \"grant_type\", value: \"password\", disabled: false},\r",
+							"            {key: \"username\", value: pm.environment.get(\"OAUTH_USERNAME\"), disabled: false},\r",
+							"            {key: \"password\", value: pm.environment.get(\"OAUTH_PASSWORD\"), disabled: false}\r",
+							"        ]\r",
+							"    }\r",
+							"  }, function (err, res) {\r",
+							"        pm.environment.set(\"authToken\", res.json().access_token);\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "62030dfc-052e-4982-ab8d-a442a1738d1a",
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"pm.environment.set(\"sessionid\", jsonData.id);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{authToken}}",
+							"type": "string"
+						},
+						{
+							"key": "tokenType",
+							"value": "bearer",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/vnd.sas.cas.session+json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{sasserver}}/casManagement/servers/cas-shared-default/sessions",
+					"host": [
+						"{{sasserver}}"
+					],
+					"path": [
+						"casManagement",
+						"servers",
+						"cas-shared-default",
+						"sessions"
+					]
+				},
+				"description": "Create a CAS session"
+			},
+			"response": []
+		},
+		{
+			"name": "loadCasLibToMemory",
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{authToken}}",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						},
+						{
+							"key": "tokenType",
+							"value": "bearer",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"caslib\":\"CASUSER(jofurb)\",\"importOptions\":{\"fileType\":\"AUTO\"},\"path\":\"DATA_ON_THE_FLY.sashdat\", \r\n \"casout\":{\"caslib\":\"PUBLIC\",\"name\":\"flight_data\",\"promote\":true}} "
+				},
+				"url": {
+					"raw": "{{sasserver}}/cas-shared-default-http/cas/sessions/{{sessionid}}/actions/table.loadTable",
+					"host": [
+						"{{sasserver}}"
+					],
+					"path": [
+						"cas-shared-default-http",
+						"cas",
+						"sessions",
+						"{{sessionid}}",
+						"actions",
+						"table.loadTable"
+					]
+				},
+				"description": "Load a CASLib into memory."
+			},
+			"response": []
+		},
+		{
+			"name": "runStatsOnFlight",
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{authToken}}",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\t\"table\":{\"caslib\":\"PUBLIC\",\"name\":\"FLIGHT_DATA\",\"groupBy\":{\"name\":\"manufacturer\"},\"where\":\"manufacturer='AIRBUS'\"},\r\n\"inputs\":[\"manufacturer\",\"time\",\"total_records\"],\r\n\"requestPackages\":[\r\n\t{\"locs\":[\"mean\",\"median\",\"biweight\"]},\r\n\t{\"scales\":[\"std\",\"gini\",\"mad\"]}\r\n\t]\r\n}"
+				},
+				"url": {
+					"raw": "{{sasserver}}/cas-shared-default-http/cas/sessions/{{sessionid}}/actions/dataPreprocess.rustats",
+					"host": [
+						"{{sasserver}}"
+					],
+					"path": [
+						"cas-shared-default-http",
+						"cas",
+						"sessions",
+						"{{sessionid}}",
+						"actions",
+						"dataPreprocess.rustats"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "simpleFightStats",
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{authToken}}",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\t\"table\":{\"caslib\":\"PUBLIC\",\"name\":\"FLIGHT_DATA\",\"groupBy\":{\"name\":\"manufacturer\"}},\r\n\t\"casout\":{\"caslib\":\"PUBLIC\",\"name\":\"airbusdata2\",\"promote\":true,\"where\":\"Manufacturer='AIRBUS'\"}\r\n}"
+				},
+				"url": {
+					"raw": "{{sasserver}}/cas-shared-default-http/cas/sessions/{{sessionid}}/actions/simple.summary",
+					"host": [
+						"{{sasserver}}"
+					],
+					"path": [
+						"cas-shared-default-http",
+						"cas",
+						"sessions",
+						"{{sessionid}}",
+						"actions",
+						"simple.summary"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "getFlightReport",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "a5646ea1-9107-481f-8d81-e3f7f9ee660b",
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"pm.environment.set(\"reportid\", jsonData.items[0].id);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "720e4db4-afdc-451c-b6de-9cb497e7bc05",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{authToken}}",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{sasserver}}/reports/reports?filter=eq(name,'Data on the Fly')",
+					"host": [
+						"{{sasserver}}"
+					],
+					"path": [
+						"reports",
+						"reports"
+					],
+					"query": [
+						{
+							"key": "filter",
+							"value": "eq(name,'Data on the Fly')"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "generateReportImage",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "937f1cdf-f3ab-424b-93be-4e16c2efa0cc",
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"pm.environment.set(\"jobid\", jsonData.id);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{authToken}}",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/vnd.sas.report.images.job.request+json",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/vnd.sas.report.images.job+json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"version\" : 2,\n  \"reportUri\" : \"/reports/reports/{{reportid}}\",\n  \"layoutType\" : \"entireSection\",\n  \"selectionType\" : \"report\",\n  \"size\" : \"900x600\",\n  \"refresh\": true\n  }"
+				},
+				"url": {
+					"raw": "{{sasserver}}/reportImages/jobs",
+					"host": [
+						"{{sasserver}}"
+					],
+					"path": [
+						"reportImages",
+						"jobs"
+					]
+				},
+				"description": "Create job to generate an svg image of the report."
+			},
+			"response": []
+		},
+		{
+			"name": "getImageFileName",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "22fd49e1-004f-42dc-b0c0-9f4719272b53",
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);\r",
+							"pm.environment.set(\"imagename\", jsonData.images[0].links[0].href);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{authToken}}",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/vnd.sas.report.images.job+json",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"requestLogLevel\":\"DEBUG\"}"
+				},
+				"url": {
+					"raw": "{{sasserver}}/reportImages/jobs/{{jobid}}",
+					"host": [
+						"{{sasserver}}"
+					],
+					"path": [
+						"reportImages",
+						"jobs",
+						"{{jobid}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "getImage",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "e546a3cc-c268-4291-b12e-7b0bde575516",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{authToken}}",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "image/svg+xml",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{sasserver}}/{{imagename}}",
+					"host": [
+						"{{sasserver}}"
+					],
+					"path": [
+						"{{imagename}}"
+					]
+				},
+				"description": "Get the report image"
+			},
+			"response": []
+		},
+		{
+			"name": "dropTable1",
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{authToken}}",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"caslib\":\"PUBLIC\",\"name\":\"airbusdata2\"}"
+				},
+				"url": {
+					"raw": "{{sasserver}}/cas-shared-default-http/cas/sessions/{{sessionid}}/actions/table.dropTable",
+					"host": [
+						"{{sasserver}}"
+					],
+					"path": [
+						"cas-shared-default-http",
+						"cas",
+						"sessions",
+						"{{sessionid}}",
+						"actions",
+						"table.dropTable"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "dropTable2",
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{authToken}}",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"caslib\":\"PUBLIC\",\"name\":\"FLIGHT_DATA\"}"
+				},
+				"url": {
+					"raw": "{{sasserver}}/cas-shared-default-http/cas/sessions/{{sessionid}}/actions/table.dropTable",
+					"host": [
+						"{{sasserver}}"
+					],
+					"path": [
+						"cas-shared-default-http",
+						"cas",
+						"sessions",
+						"{{sessionid}}",
+						"actions",
+						"table.dropTable"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "endCASSession",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "26cfcbb0-792a-43c0-9876-fa1cd9aa86af",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "87b39379-7ed1-4561-bb6c-03c87509e34f",
+						"exec": [
+							"pm.environment.unset(\"jobid\");",
+							"pm.environment.unset(\"reportid\");",
+							"pm.environment.unset(\"sessionid\");",
+							"pm.environment.unset(\"imagename\");",
+							"pm.environment.unset(\"authToken\");"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{authToken}}",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{sasserver}}/cas-shared-default-http/cas/sessions/{{sessionid}}",
+					"host": [
+						"{{sasserver}}"
+					],
+					"path": [
+						"cas-shared-default-http",
+						"cas",
+						"sessions",
+						"{{sessionid}}"
+					]
+				},
+				"description": "End the current CAS session."
+			},
+			"response": []
+		}
+	]
+}
