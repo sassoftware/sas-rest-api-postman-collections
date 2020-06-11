@@ -3,7 +3,7 @@
 Repository of Postman collections for SAS Viya REST APIs and CAS Action REST APIs. To help build the repositories scope, contributions are encouraged.
 
 ## Installation/Usage
-Each folder in this repository is a self-contained Postman collection. Instrctions for usage and access to supporting data is included in each sample.
+Each folder in this repository is a self-contained Postman collection. Instructions for usage and access to supporting data is included in each sample.
 
 ## [](#contributing)Contributing
 
