@@ -1,0 +1,284 @@
+{
+	"info": {
+		"_postman_id": "85432da3-12be-47dd-b760-2c49f4c50743",
+		"name": "jobs",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "jobDefinition",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "defe4af7-60b1-4d44-8a59-9a571be07e8c",
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);\r",
+							"pm.environment.set(\"jobDefinition\", jsonData.id);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "ca990130-5e7f-4678-8aec-66ff2fdc7010",
+						"exec": [
+							"pm.sendRequest({\r",
+							"    url: pm.environment.get(\"sasserver\")+\"/SASLogon/oauth/token\",\r",
+							"    method: 'POST',\r",
+							"    header: {\r",
+							"        'Authorization': 'Basic '+ pm.environment.get(\"encoded_id_secret\"),\r",
+							"        'Accept': 'application/json',\r",
+							"        'Content-Type': 'application/x-www-form-urlencoded',\r",
+							"    },\r",
+							"    body: {\r",
+							"          mode: 'urlencoded',\r",
+							"          urlencoded: [\r",
+							"            {key: \"grant_type\", value: \"password\", disabled: false},\r",
+							"            {key: \"username\", value: pm.environment.get(\"OAUTH_USERNAME\"), disabled: false},\r",
+							"            {key: \"password\", value: pm.environment.get(\"OAUTH_PASSWORD\"), disabled: false}\r",
+							"        ]\r",
+							"    }\r",
+							"  }, function (err, res) {\r",
+							"        pm.environment.set(\"authToken\", res.json().access_token);\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{authToken}}",
+							"type": "string"
+						},
+						{
+							"key": "tokenType",
+							"value": "bearer",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/vnd.sas.job.definition+json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"version\":2,\r\n  \"name\":\"Simple proc print\",\r\n  \"description\":\"Show the contents of sashelp.class using PROC PRINT\",\r\n  \"type\":\"Compute\",\r\n  \"parameters\":[\r\n        {\r\n        \"version\": 1,\r\n        \"name\": \"_contextName\",\r\n        \"defaultValue\": \"SAS Job Execution compute context\",\r\n        \"type\": \"CHARACTER\",\r\n        \"label\": \"Context Name\",\r\n        \"required\": false\r\n    }\r\n  ],\r\n  \"code\":\"ods html style=HTMLBlue;\\nproc print data=sashelp.class; run; quit;\\nods html close;\"\r\n}",
+					"options": {
+						"raw": {}
+					}
+				},
+				"url": {
+					"raw": "{{sasserver}}/jobDefinitions/definitions",
+					"host": [
+						"{{sasserver}}"
+					],
+					"path": [
+						"jobDefinitions",
+						"definitions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "jobExecution",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "692986c7-6dd1-4e5b-b4f2-7b3aa529fd98",
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);\r",
+							"pm.environment.set(\"jobExecutionID\", jsonData.id);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{authToken}}",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/vnd.sas.job.execution.job.request+json",
+						"type": "text"
+					},
+					{
+						"key": "Accept",
+						"value": "application/vnd.sas.job.execution.job+json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"jobDefinitionUri\": \"/jobDefinitions/definitions/{{jobDefinition}}\"\r\n}",
+					"options": {
+						"raw": {}
+					}
+				},
+				"url": {
+					"raw": "{{sasserver}}/jobExecution/jobs",
+					"host": [
+						"{{sasserver}}"
+					],
+					"path": [
+						"jobExecution",
+						"jobs"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "jobInfo",
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{authToken}}",
+							"type": "string"
+						},
+						{
+							"key": "tokenType",
+							"value": "bearer",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{sasserver}}/jobExecution/jobs/{{jobExecutionID}}",
+					"host": [
+						"{{sasserver}}"
+					],
+					"path": [
+						"jobExecution",
+						"jobs",
+						"{{jobExecutionID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "jobState",
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{authToken}}",
+							"type": "string"
+						},
+						{
+							"key": "tokenType",
+							"value": "bearer",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{sasserver}}/jobExecution/jobs/{{jobExecutionID}}/state",
+					"host": [
+						"{{sasserver}}"
+					],
+					"path": [
+						"jobExecution",
+						"jobs",
+						"{{jobExecutionID}}",
+						"state"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "deleteJob",
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{authToken}}",
+							"type": "string"
+						},
+						{
+							"key": "tokenType",
+							"value": "bearer",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{sasserver}}/jobDefinitions/definitions/{{jobDefinition}}",
+					"host": [
+						"{{sasserver}}"
+					],
+					"path": [
+						"jobDefinitions",
+						"definitions",
+						"{{jobDefinition}}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}
