@@ -1,0 +1,663 @@
+{
+	"info": {
+		"_postman_id": "fa323db8-7ab7-463c-9014-f00e8381cbd9",
+		"name": "tableActionSet",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "createCASSession",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"pm.sendRequest({\r",
+							"    url: pm.environment.get(\"sasserver\")+\"/SASLogon/oauth/token\",\r",
+							"    method: 'POST',\r",
+							"    header: {\r",
+							"        'Authorization': 'Basic '+ pm.environment.get(\"encoded_id_secret\"),\r",
+							"        'Accept': 'application/json',\r",
+							"        'Content-Type': 'application/x-www-form-urlencoded',\r",
+							"    },\r",
+							"    body: {\r",
+							"          mode: 'urlencoded',\r",
+							"          urlencoded: [\r",
+							"            {key: \"grant_type\", value: \"password\", disabled: false},\r",
+							"            {key: \"username\", value: pm.environment.get(\"OAUTH_USERNAME\"), disabled: false},\r",
+							"            {key: \"password\", value: pm.environment.get(\"OAUTH_PASSWORD\"), disabled: false}\r",
+							"        ]\r",
+							"    }\r",
+							"  }, function (err, res) {\r",
+							"        pm.environment.set(\"access_token\", res.json().access_token);\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"pm.environment.set(\"sessionid\", jsonData.id);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{authToken}}",
+							"type": "string"
+						},
+						{
+							"key": "tokenType",
+							"value": "bearer",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/vnd.sas.cas.session+json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{sasserver}}/casManagement/servers/cas-shared-default/sessions",
+					"host": [
+						"{{sasserver}}"
+					],
+					"path": [
+						"casManagement",
+						"servers",
+						"cas-shared-default",
+						"sessions"
+					]
+				},
+				"description": "Create a CAS session"
+			},
+			"response": []
+		},
+		{
+			"name": "loadCasLibToMemory",
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{authToken}}",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						},
+						{
+							"key": "tokenType",
+							"value": "bearer",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"caslib\":\"PUBLIC\",\"importOptions\":{\"fileType\":\"AUTO\"},\"path\":\"SIMPLETABLE.sashdat\", \r\n \"casout\":{\"caslib\":\"PUBLIC\",\"name\":\"SIMPLETABLE\",\"promote\":true}} "
+				},
+				"url": {
+					"raw": "{{sasserver}}/cas-shared-default-http/cas/sessions/{{sessionid}}/actions/table.loadTable",
+					"host": [
+						"{{sasserver}}"
+					],
+					"path": [
+						"cas-shared-default-http",
+						"cas",
+						"sessions",
+						"{{sessionid}}",
+						"actions",
+						"table.loadTable"
+					]
+				},
+				"description": "Load a CASLib into memory."
+			},
+			"response": []
+		},
+		{
+			"name": "updateTable",
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{authToken}}",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						},
+						{
+							"key": "tokenType",
+							"value": "bearer",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"set\":[{\"value\":\"\\\"Clerk\\\"\", \"var\":\"Occupation\"}],\"table\":{\"caslib\":\"PUBLIC\",\"name\":\"SIMPLETABLE\",\"where\":\"Age >20\"}}"
+				},
+				"url": {
+					"raw": "{{sasserver}}/cas-shared-default-http/cas/sessions/{{sessionid}}/actions/table.update",
+					"host": [
+						"{{sasserver}}"
+					],
+					"path": [
+						"cas-shared-default-http",
+						"cas",
+						"sessions",
+						"{{sessionid}}",
+						"actions",
+						"table.update"
+					]
+				},
+				"description": "Load a CASLib into memory."
+			},
+			"response": []
+		},
+		{
+			"name": "fedsql",
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{authToken}}",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						},
+						{
+							"key": "tokenType",
+							"value": "bearer",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"query\":\"create table PUBLIC.smallaudit {options replace=true} as select * FROM Public.simpletable\"\r\n}"
+				},
+				"url": {
+					"raw": "{{sasserver}}/cas-shared-default-http/cas/sessions/{{sessionid}}/actions/fedsql.execdirect",
+					"host": [
+						"{{sasserver}}"
+					],
+					"path": [
+						"cas-shared-default-http",
+						"cas",
+						"sessions",
+						"{{sessionid}}",
+						"actions",
+						"fedsql.execdirect"
+					]
+				},
+				"description": "Load a CASLib into memory."
+			},
+			"response": []
+		},
+		{
+			"name": "promoteTable",
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{authToken}}",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						},
+						{
+							"key": "tokenType",
+							"value": "bearer",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"caslib\":\"PUBLIC\",\"name\":\"smallaudit\"}"
+				},
+				"url": {
+					"raw": "{{sasserver}}/cas-shared-default-http/cas/sessions/{{sessionid}}/actions/table.promote",
+					"host": [
+						"{{sasserver}}"
+					],
+					"path": [
+						"cas-shared-default-http",
+						"cas",
+						"sessions",
+						"{{sessionid}}",
+						"actions",
+						"table.promote"
+					]
+				},
+				"description": "Load a CASLib into memory."
+			},
+			"response": []
+		},
+		{
+			"name": "appendTable",
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{authToken}}",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						},
+						{
+							"key": "tokenType",
+							"value": "bearer",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"source\":{\"caslib\":\"PUBLIC\",\"name\":\"SIMPLETABLEAPPEND\"},\"target\":{\"caslib\":\"PUBLIC\",\"name\":\"SIMPLETABLE\"}\r\n}"
+				},
+				"url": {
+					"raw": "{{sasserver}}/cas-shared-default-http/cas/sessions/{{sessionid}}/actions/table.append",
+					"host": [
+						"{{sasserver}}"
+					],
+					"path": [
+						"cas-shared-default-http",
+						"cas",
+						"sessions",
+						"{{sessionid}}",
+						"actions",
+						"table.append"
+					]
+				},
+				"description": "Load a CASLib into memory."
+			},
+			"response": []
+		},
+		{
+			"name": "appendTableDataStep",
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{authToken}}",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						},
+						{
+							"key": "tokenType",
+							"value": "bearer",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"code\": \"data public.simpletablefinal (promote=yes); set public.SIMPLETABLE public.SIMPLETABLEAPPEND;run;\"\r\n}"
+				},
+				"url": {
+					"raw": "{{sasserver}}/cas-shared-default-http/cas/sessions/{{sessionid}}/actions/datastep.runcode",
+					"host": [
+						"{{sasserver}}"
+					],
+					"path": [
+						"cas-shared-default-http",
+						"cas",
+						"sessions",
+						"{{sessionid}}",
+						"actions",
+						"datastep.runcode"
+					]
+				},
+				"description": "Load a CASLib into memory."
+			},
+			"response": []
+		},
+		{
+			"name": "fetchTable",
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{authToken}}",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						},
+						{
+							"key": "tokenType",
+							"value": "bearer",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"table\":{\"caslib\":\"PUBLIC\",\"name\":\"SIMPLETABLEfinal\"}\r\n}"
+				},
+				"url": {
+					"raw": "{{sasserver}}/cas-shared-default-http/cas/sessions/{{sessionid}}/actions/table.fetch",
+					"host": [
+						"{{sasserver}}"
+					],
+					"path": [
+						"cas-shared-default-http",
+						"cas",
+						"sessions",
+						"{{sessionid}}",
+						"actions",
+						"table.fetch"
+					]
+				},
+				"description": "Load a CASLib into memory."
+			},
+			"response": []
+		},
+		{
+			"name": "deleteRows",
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{authToken}}",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						},
+						{
+							"key": "tokenType",
+							"value": "bearer",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"table\":{\"caslib\":\"PUBLIC\",\"name\":\"SIMPLETABLE\",\"where\":\"Age <20\" }}"
+				},
+				"url": {
+					"raw": "{{sasserver}}/cas-shared-default-http/cas/sessions/{{sessionid}}/actions/table.deleteRows",
+					"host": [
+						"{{sasserver}}"
+					],
+					"path": [
+						"cas-shared-default-http",
+						"cas",
+						"sessions",
+						"{{sessionid}}",
+						"actions",
+						"table.deleteRows"
+					]
+				},
+				"description": "Load a CASLib into memory."
+			},
+			"response": []
+		},
+		{
+			"name": "recordCount",
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{authToken}}",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						},
+						{
+							"key": "tokenType",
+							"value": "bearer",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"table\":{\"caslib\":\"PUBLIC\",\"name\":\"SIMPLETABLE\"}} "
+				},
+				"url": {
+					"raw": "{{sasserver}}/cas-shared-default-http/cas/sessions/{{sessionid}}/actions/table.recordCount",
+					"host": [
+						"{{sasserver}}"
+					],
+					"path": [
+						"cas-shared-default-http",
+						"cas",
+						"sessions",
+						"{{sessionid}}",
+						"actions",
+						"table.recordCount"
+					]
+				},
+				"description": "Load a CASLib into memory."
+			},
+			"response": []
+		},
+		{
+			"name": "tableExists",
+			"request": {
+				"auth": {
+					"type": "oauth2",
+					"oauth2": [
+						{
+							"key": "accessToken",
+							"value": "{{authToken}}",
+							"type": "string"
+						},
+						{
+							"key": "addTokenTo",
+							"value": "header",
+							"type": "string"
+						},
+						{
+							"key": "tokenType",
+							"value": "bearer",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"caslib\":\"PUBLIC\",\"name\":\"simpletablefinal\"}"
+				},
+				"url": {
+					"raw": "{{sasserver}}/cas-shared-default-http/cas/sessions/{{sessionid}}/actions/table.tableExists",
+					"host": [
+						"{{sasserver}}"
+					],
+					"path": [
+						"cas-shared-default-http",
+						"cas",
+						"sessions",
+						"{{sessionid}}",
+						"actions",
+						"table.tableExists"
+					]
+				},
+				"description": "Load a CASLib into memory."
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "OAUTH_USERNAME",
+			"value": ""
+		},
+		{
+			"key": "OAUTH_PASSWORD",
+			"value": ""
+		},
+		{
+			"key": "sasserver",
+			"value": ""
+		},
+		{
+			"key": "encoded_id_secret",
+			"value": ""
+		}
+	]
+}
